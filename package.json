@@ -1,0 +1,47 @@
+{
+  "name": "react-native-audio-editor",
+  "title": "React Native Audio Editor",
+  "version": "1.0.0",
+  "description": "TODO",
+  "main": "index.js",
+  "files": [
+    "README.md",
+    "android",
+    "index.js",
+    "ios",
+    "react-native-audio-editor.podspec"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/github_account/react-native-audio-editor.git",
+    "baseUrl": "https://github.com/github_account/react-native-audio-editor"
+  },
+  "keywords": [
+    "react-native"
+  ],
+  "author": {
+    "name": "Your Name",
+    "email": "yourname@email.com"
+  },
+  "license": "MIT",
+  "licenseFilename": "LICENSE",
+  "readmeFilename": "README.md",
+  "peerDependencies": {
+    "react": ">=16.8.1",
+    "ffmpeg-kit-react-native": "^4.5.1",
+    "react-native-soundcloud-waveform": "^1.0.3",
+    "@react-native-community/slider": "^4.2.2",
+    "react-native-video": "^5.2.0",
+    "rn-fetch-blob": "^0.12.0"
+  },
+  "devDependencies": {
+    "ffmpeg-kit-react-native": "^4.5.1",
+    "react-native-soundcloud-waveform": "^1.0.3",
+    "react-native-video": "^5.2.0",
+    "@react-native-community/slider": "^4.2.2",
+    "rn-fetch-blob": "^0.12.0"
+  }
+}
