@@ -6,99 +6,10 @@ import React, {
   useEffect,
   useCallback,
 } from 'react';
+import { LOCALES } from './utils/locales';
+import { THEMES } from './utils/themes';
 
-const DUMMY_DATA = [
-  {
-    id: 17,
-    createdAt: '2022-04-18T05:11:50.537Z',
-    updatedAt: '2022-04-18T05:15:34.147Z',
-    name: 'Genie 5',
-    thumbnail:
-      'https://d1dppjm4v1py41.cloudfront.net/400x0/common/avt-cute1-52a3d1f28d09238b.jpg',
-    hashtag: null,
-    categoryId: null,
-    data: {
-      duration: 201.142857,
-      audioLink:
-        'https://audio.meetyourgenie.com/threads/bite20me20clean20-20neffex-d7b76a21f3fbf66f.mp3',
-    },
-    isActive: true,
-    userId: null,
-    user: null,
-  },
-  {
-    id: 18,
-    createdAt: '2022-04-18T05:12:20.281Z',
-    updatedAt: '2022-04-18T05:15:27.443Z',
-    name: 'Genie 4',
-    thumbnail:
-      'https://d1dppjm4v1py41.cloudfront.net/400x0/common/avt-cute-d7b294b84369eb82.jpg',
-    hashtag: null,
-    categoryId: null,
-    data: {
-      duration: 138.997551,
-      audioLink:
-        'https://audio.meetyourgenie.com/threads/breeze20-20telecasted-eb7c91f09f63dae6.mp3',
-    },
-    isActive: true,
-    userId: null,
-    user: null,
-  },
-  {
-    id: 21,
-    createdAt: '2022-04-18T05:15:15.591Z',
-    updatedAt: '2022-04-18T05:15:15.591Z',
-    name: 'Genie 3',
-    thumbnail:
-      'https://d1dppjm4v1py41.cloudfront.net/400x0/common/avt-cute-3-a96bb92be439ec63.jpg',
-    hashtag: null,
-    categoryId: null,
-    data: {
-      duration: 176.117551,
-      audioLink:
-        'https://audio.meetyourgenie.com/threads/thats20what20it20takes20instrumental20-20neffex-5b04315475bbf5a6.mp3',
-    },
-    isActive: true,
-    userId: null,
-    user: null,
-  },
-  {
-    id: 20,
-    createdAt: '2022-04-18T05:14:42.041Z',
-    updatedAt: '2022-04-18T05:14:42.041Z',
-    name: 'Genie 2',
-    thumbnail:
-      'https://d1dppjm4v1py41.cloudfront.net/400x0/common/avt-cute-4-75342d8d64ffc5f9.jpg',
-    hashtag: null,
-    categoryId: null,
-    data: {
-      duration: 183.614694,
-      audioLink:
-        'https://audio.meetyourgenie.com/threads/its20only20worth20it20if20you20work20for20it20instrumental20-20neffex-f2c6f71d094e86d1.mp3',
-    },
-    isActive: true,
-    userId: null,
-    user: null,
-  },
-  {
-    id: 19,
-    createdAt: '2022-04-18T05:13:38.889Z',
-    updatedAt: '2022-04-18T05:13:38.889Z',
-    name: 'Genie 1',
-    thumbnail:
-      'https://d1dppjm4v1py41.cloudfront.net/400x0/common/avt-cute-2-d6b753efe8074585.jpg',
-    hashtag: null,
-    categoryId: null,
-    data: {
-      duration: 155.297959,
-      audioLink:
-        'https://audio.meetyourgenie.com/threads/dont20wanna20let20myself20down20instrumental20-20neffex-833a9fa8a12959a2.mp3',
-    },
-    isActive: true,
-    userId: null,
-    user: null,
-  },
-];
+const DUMMY_DATA = [];
 
 export const AudioEditorContext = createContext();
 
@@ -110,6 +21,16 @@ export const useSpeed = () => {
 export const useAudioEffect = () => {
   const { audioEffect, setAudioEffect } = useContext(AudioEditorContext);
   return [audioEffect, setAudioEffect];
+};
+
+export const useThemes = () => {
+  const { themes } = useContext(AudioEditorContext);
+  return themes;
+};
+
+export const useLocales = () => {
+  const { locales } = useContext(AudioEditorContext);
+  return locales;
 };
 
 export const useBackgroundAudio = () => {
@@ -144,26 +65,46 @@ export const useBackgroundAudio = () => {
 };
 
 export const AudioEditorContextProvider = ({
-  initSpeed = 1,
-  initialRightHandlePosition,
-  initialLeftHandlePosition,
+  initialSpeed = 1,
+  initialRightHandlePosition = 2000,
+  initialLeftHandlePosition = 0,
+  initialRightHandlePositionBG = 2000,
+  initialLeftHandlePositionBG = 0,
+  initialbgVolumn = 0.5,
   children,
   audioList = DUMMY_DATA,
   loadMoreAudio,
   onRefreshBackgroundAudio,
   audioUri,
+  themes,
+  locales,
+  initialAudioEffect,
+  defaultResult,
+  initialBackgroundAudio,
 }) => {
-  const [speed, setSpeed] = useState(initSpeed);
-  const [audioEffect, setAudioEffect] = useState();
-  const [result, setResult] = useState();
-  const [backgroundAudio, setBackgroundAudio] = useState(null);
-  const [bgVolumn, setBGVolumn] = useState(0.5);
+  const [_themes] = useState(themes || THEMES);
+  const [_locales] = useState(locales || LOCALES);
+  const [speed, setSpeed] = useState(initialSpeed);
+  const [audioEffect, setAudioEffect] = useState(initialAudioEffect);
+  const [result, setResult] = useState(defaultResult);
+  const [backgroundAudio, setBackgroundAudio] = useState(
+    initialBackgroundAudio,
+  );
+  const [bgVolumn, setBGVolumn] = useState(initialbgVolumn);
   const [duration, setDuration] = useState(0);
-  const [trimmerLeftHandlePosition, setTrimmerLeft] = useState(0);
-  const [trimmerRightHandlePosition, setTrimmerRight] = useState(2000);
+  const [trimmerLeftHandlePosition, setTrimmerLeft] = useState(
+    initialLeftHandlePosition,
+  );
+  const [trimmerRightHandlePosition, setTrimmerRight] = useState(
+    initialRightHandlePosition,
+  );
 
-  const [trimmerLeftHandlePositionBG, setTrimmerLeftBG] = useState(0);
-  const [trimmerRightHandlePositionBG, setTrimmerRightBG] = useState(2000);
+  const [trimmerLeftHandlePositionBG, setTrimmerLeftBG] = useState(
+    initialLeftHandlePositionBG,
+  );
+  const [trimmerRightHandlePositionBG, setTrimmerRightBG] = useState(
+    initialRightHandlePositionBG,
+  );
 
   const _setDuration = useCallback(
     (_duration) => {
@@ -199,6 +140,8 @@ export const AudioEditorContextProvider = ({
       setResult,
       audioEffect,
       setAudioEffect,
+      themes: _themes,
+      locales: _locales,
     }),
     [
       speed,
@@ -221,6 +164,8 @@ export const AudioEditorContextProvider = ({
       setResult,
       audioEffect,
       setAudioEffect,
+      _themes,
+      _locales,
     ],
   );
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import PropTypes from 'prop-types';
 import { debounce } from 'lodash';
+import { useThemes } from '../AudioEditorContext';
 
 const SearchInput = ({
   containerStyle,
@@ -27,6 +28,9 @@ const SearchInput = ({
   children,
   onCancel,
 }) => {
+  const themes = useThemes();
+  const styles = useMemo(() => genStyles(themes), [themes]);
+
   const [isFocus, setIsFocus] = useState(false);
   const ref = useRef(null);
   const _onFocus = () => {
@@ -105,59 +109,60 @@ SearchInput.propTypes = {
   defaultValue: PropTypes.string,
 };
 
-const styles = StyleSheet.create({
-  container: {
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginVertical: 15,
-  },
-  vTextInput: {
-    flex: 1,
-    height: 40,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contentInput: {
-    flex: 1,
-    paddingLeft: 15,
-    borderRadius: 10,
-    height: 40,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  shadow: {
-    shadowColor: 'rgba(0, 0, 0, 0.15)',
-    shadowOffset: {
-      width: 0,
-      height: 1,
+const genStyles = (themes) =>
+  StyleSheet.create({
+    container: {
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexDirection: 'row',
+      marginVertical: 15,
     },
-    shadowRadius: 4,
-    shadowOpacity: 1,
-    elevation: 4,
-  },
-  input: {
-    color: '#ffff',
-    fontSize: 12,
-    height: 40,
-    paddingHorizontal: 10,
-  },
-  icon: {
-    color: '#ffff',
-  },
-  button: {
-    borderRadius: 0,
-    backgroundColor: 'transparent',
-    fontSize: 17,
-    // position: 'absolute',
-    // right: 15,
-    color: '#ffff',
-    transform: [{ translateY: 1 }],
-    marginRight: 15,
-  },
-});
+    vTextInput: {
+      flex: 1,
+      height: 40,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    contentInput: {
+      flex: 1,
+      paddingLeft: 15,
+      borderRadius: 10,
+      height: 40,
+      backgroundColor: themes.backgroundColorInput,
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    shadow: {
+      shadowColor: 'rgba(0, 0, 0, 0.15)',
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      shadowRadius: 4,
+      shadowOpacity: 1,
+      elevation: 4,
+    },
+    input: {
+      color: themes.inputTextColor,
+      fontSize: 12,
+      height: 40,
+      paddingHorizontal: 10,
+    },
+    icon: {
+      color: themes.inputTextColor,
+    },
+    button: {
+      borderRadius: 0,
+      backgroundColor: 'transparent',
+      fontSize: 17,
+      // position: 'absolute',
+      // right: 15,
+      color: themes.inputTextColor,
+      transform: [{ translateY: 1 }],
+      marginRight: 15,
+    },
+  });
 
 export default SearchInput;

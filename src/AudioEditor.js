@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useContext, useState } from 'react';
+import React, { useRef, useEffect, useContext, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   View,
@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Dimensions,
   ActivityIndicator,
+  LayoutAnimation,
 } from 'react-native';
 import Video from 'react-native-video';
 import Trimmer from './Trimmer';
@@ -39,6 +40,7 @@ const AudioTrimmer = ({ playling, setPlayling, onChangeSeek }) => {
     backgroundAudio,
     duration,
     speed,
+    themes,
   } = useContext(AudioEditorContext);
 
   const [scrubberPosition, setScrubberPosition] = useState(
@@ -61,7 +63,9 @@ const AudioTrimmer = ({ playling, setPlayling, onChangeSeek }) => {
       scrubberInterval = setInterval(() => {
         setScrubberPosition((old) => {
           if (old + _scrubInterval >= trimmerRightHandlePosition) {
-            setPlayling(false);
+            setTimeout(() => {
+              setPlayling(false);
+            }, 0);
             clearInterval(scrubberInterval);
             return trimmerLeftHandlePosition;
           }
@@ -76,7 +80,7 @@ const AudioTrimmer = ({ playling, setPlayling, onChangeSeek }) => {
       }
     };
   }, [playling]);
-
+  console.log('themes', themes);
   return (
     <Trimmer
       onHandleChange={onHandleChange}
@@ -89,11 +93,11 @@ const AudioTrimmer = ({ playling, setPlayling, onChangeSeek }) => {
       zoomMultiplier={20}
       initialZoomValue={1}
       scaleInOnInit={false}
-      tintColor="#FFCA28"
-      markerColor="#ffffff"
-      trackBackgroundColor="#ffffff10"
-      trackBorderColor="#ffffff10"
-      scrubberColor="#FFCA28"
+      tintColor={themes.tintColor}
+      markerColor={themes.markerColor}
+      trackBackgroundColor={themes.trackBackgroundColor}
+      trackBorderColor={themes.trackBorderColor}
+      scrubberColor={themes.scrubberColor}
       scrubberPosition={scrubberPosition}
       onScrubbingComplete={onScrubbingComplete}
       onLeftHandlePressIn={() => console.log('onLeftHandlePressIn')}
@@ -103,11 +107,13 @@ const AudioTrimmer = ({ playling, setPlayling, onChangeSeek }) => {
   );
 };
 
-const AudioEditorUI = (props) => {
+const AudioEditorUI = ({ hasSpeed, hasEffect, onCancel, onConfirm }) => {
   const [loading, setLoading] = useState(false);
   const [playling, setPlayling] = useState(false);
+  const [isConfirm, setIsConfirm] = useState(false);
+
   const ref = useRef();
-  const refResult = useRef();
+
   const {
     backgroundAudio,
     setDuration,
@@ -122,9 +128,19 @@ const AudioEditorUI = (props) => {
     trimmerLeftHandlePositionBG,
     trimmerRightHandlePositionBG,
     audioEffect,
+    themes,
+    locales,
   } = useContext(AudioEditorContext);
 
+  const styles = useMemo(() => genStyles(themes), [themes]);
+
   const playScrubber = () => {
+    onChangeSeek(trimmerLeftHandlePosition);
+    setPlayling(true);
+    compressResult();
+  };
+
+  const compressResult = () => {
     setLoading(true);
     if (backgroundAudio) {
       makeBackgroundAudio(
@@ -144,10 +160,8 @@ const AudioEditorUI = (props) => {
       )
         .then((e) => {
           setResult(e);
-          setPlayling(true);
-          setLoading(false);
         })
-        .catch(() => {
+        .finally(() => {
           setLoading(false);
         });
       return;
@@ -161,10 +175,8 @@ const AudioEditorUI = (props) => {
     })
       .then((e) => {
         setResult(e);
-        setPlayling(true);
-        setLoading(false);
       })
-      .catch(() => {
+      .finally(() => {
         setLoading(false);
       });
   };
@@ -175,64 +187,75 @@ const AudioEditorUI = (props) => {
 
   const onChangeSeek = (e) => {
     ref.current?.seek?.(e / 1000);
-    refResult.current?.seek?.(0);
   };
 
-  console.log('result', result);
+  const _onConfirm = () => {
+    if (result && !loading) {
+      onConfirm?.(result);
+    } else {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setIsConfirm(true);
+      !result && compressResult();
+    }
+  };
+
+  useEffect(() => {
+    if (isConfirm && !loading && result) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      onConfirm?.(result);
+      setIsConfirm(false);
+    }
+  }, [isConfirm, loading, result]);
+
   return (
-    <SafeAreaView style={styles.wrapper}>
-      <Video
-        ignoreSilentSwitch="ignore"
-        source={{
-          uri: audioUri,
-        }}
-        audioOnly
-        onEnd={() => {}}
-        onSeek={(e) => console.log(e)}
-        paused={true}
-        onLoad={(e) => {
-          !duration && setDuration(e.duration);
-        }}
-      />
-      {!!result && playling && (
+    <>
+      <SafeAreaView style={styles.wrapper}>
         <Video
           ignoreSilentSwitch="ignore"
           source={{
-            uri: result,
+            uri: audioUri,
           }}
+          ref={ref}
           audioOnly
-          ref={refResult}
-          onEnd={() => {
-            console.log('onEnd');
+          onEnd={() => {}}
+          paused={!playling}
+          onLoad={(e) => {
+            !duration && setDuration(e.duration);
           }}
-          onProgress={(e) => console.log('onProgress')}
-          onLoad={(e) => console.log(e)}
-          onSeek={(e) => console.log(e)}
         />
-      )}
-      {duration ? (
-        <View style={styles.container}>
-          <View style={styles.centerContent}>
-            <AudioTrimmer
-              onChangeSeek={onChangeSeek}
-              playling={!!result && playling}
-              setPlayling={setPlayling}
+        {duration ? (
+          <View style={styles.container}>
+            <View style={styles.centerContent}>
+              <AudioTrimmer
+                onChangeSeek={onChangeSeek}
+                playling={!!result && playling}
+                setPlayling={setPlayling}
+              />
+              {!!backgroundAudio && (
+                <BackgroundAudioPreview playling={playling} />
+              )}
+              <Button
+                onPress={playling ? pauseScrubber : playScrubber}
+                icon={playling ? 'pause' : 'play'}
+              >
+                {playling ? locales.pause : locales.play}
+              </Button>
+            </View>
+            <Actions
+              onConfirm={_onConfirm}
+              onCancel={onCancel}
+              hasSpeed={hasSpeed}
+              hasEffect={hasEffect}
             />
-            {!!backgroundAudio && (
-              <BackgroundAudioPreview playling={playling} />
-            )}
-            <Button
-              onPress={playling ? pauseScrubber : playScrubber}
-              icon={playling ? 'pause' : 'play'}
-              loading={loading}
-            >
-              {playling ? 'Pause' : 'Play'}
-            </Button>
           </View>
-          <Actions />
+        ) : null}
+      </SafeAreaView>
+      {isConfirm && (
+        <View style={styles.overlay}>
+          <ActivityIndicator />
         </View>
-      ) : null}
-    </SafeAreaView>
+      )}
+    </>
   );
 };
 
@@ -251,43 +274,56 @@ const AudioEditor = ({
 AudioEditor.propTypes = {
   audioUri: PropTypes.string,
   initSpeed: PropTypes.number,
+  hasEffect: PropTypes.bool,
+  hasSpeed: PropTypes.bool,
 };
 
-const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    backgroundColor: '#061A31',
-    width: Dimensions.get('window').width,
-  },
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  btn: {
-    backgroundColor: '#ffffff10',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    height: 32,
-    borderRadius: 10,
-  },
-  icon: {
-    width: 15,
-    height: 15,
-    resizeMode: 'contain',
-    marginRight: 10,
-  },
-  text: {
-    color: 'white',
-  },
-  centerContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 300,
-  },
-});
+const genStyles = (themes) =>
+  StyleSheet.create({
+    wrapper: {
+      flex: 1,
+      backgroundColor: themes.background,
+      width: Dimensions.get('window').width,
+    },
+    container: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: 1,
+    },
+    btn: {
+      backgroundColor: themes.trackBackgroundColor,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 10,
+      height: 32,
+      borderRadius: 10,
+    },
+    icon: {
+      width: 15,
+      height: 15,
+      resizeMode: 'contain',
+      marginRight: 10,
+    },
+    text: {
+      color: 'white',
+    },
+    centerContent: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 300,
+    },
+    overlay: {
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });
 
 export default AudioEditor;

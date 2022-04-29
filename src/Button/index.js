@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   TouchableHighlight,
   Animated,
@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Icons from '../assets/Icons';
+import { useThemes } from '../AudioEditorContext';
 
 const Button = ({
   selected,
@@ -20,6 +21,9 @@ const Button = ({
   style,
   iconStyle,
 }) => {
+  const themes = useThemes();
+  const styles = useMemo(() => genStyles(themes), [themes]);
+
   return (
     <TouchableHighlight underlayColor="transparent" onPress={onPress}>
       <View style={[styles.btn, selected && styles.selected, style]}>
@@ -41,7 +45,7 @@ const Button = ({
 };
 
 Button.propTypes = {
-  onPress: PropTypes.func.isRequired,
+  onPress: PropTypes.func,
   icon: PropTypes.string,
 };
 
@@ -49,32 +53,33 @@ Button.defaultProps = {};
 
 export default Button;
 
-const styles = StyleSheet.create({
-  btn: {
-    backgroundColor: '#ffffff10',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    height: 32,
-    borderRadius: 10,
-  },
-  icon: {
-    width: 15,
-    height: 15,
-    resizeMode: 'contain',
-    marginRight: 10,
-  },
-  text: {
-    color: 'white',
-  },
-  selected: {
-    backgroundColor: '#FFCA28',
-  },
-  selectedText: {
-    color: '#061A31',
-  },
-  selectedIcon: {
-    tintColor: '#061A31',
-  },
-});
+const genStyles = (themes) =>
+  StyleSheet.create({
+    btn: {
+      backgroundColor: themes.trackBackgroundColor,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 10,
+      height: 32,
+      borderRadius: 10,
+    },
+    icon: {
+      width: 15,
+      height: 15,
+      resizeMode: 'contain',
+      marginRight: 10,
+    },
+    text: {
+      color: 'white',
+    },
+    selected: {
+      backgroundColor: themes.selected,
+    },
+    selectedText: {
+      color: themes.selectedText,
+    },
+    selectedIcon: {
+      tintColor: themes.selectedText,
+    },
+  });

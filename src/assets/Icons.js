@@ -5,6 +5,7 @@ import play from './play.png';
 import speed from './speed.png';
 import close from './close.png';
 import effect from './effect.png';
+import checked from './checked.png';
 
 export default {
   speed,
@@ -14,4 +15,5 @@ export default {
   del,
   close,
   effect,
+  checked,
 };

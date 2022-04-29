@@ -5,10 +5,11 @@ import Button from './Button';
 import Speed from './Speeds';
 import BackgroundAudios from './BackgroundAudios';
 import Effect from './Effect';
+import { useLocales } from './AudioEditorContext';
 
-const Actions = (props) => {
+const Actions = ({ hasSpeed, hasEffect, onConfirm, onCancel }) => {
   const [action, setAction] = useState();
-
+  const locales = useLocales();
   const onChangeAction = (e) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setAction(e);
@@ -29,11 +30,22 @@ const Actions = (props) => {
             <Button
               iconStyle={styles.icon}
               style={styles.btn}
-              icon="speed"
-              onPress={() => onChangeAction('speed')}
+              icon="close"
+              onPress={onCancel}
             ></Button>
-            <Text style={styles.text}>Speed</Text>
+            <Text style={styles.text}> </Text>
           </View>
+          {hasSpeed && (
+            <View style={styles.action}>
+              <Button
+                iconStyle={styles.icon}
+                style={styles.btn}
+                icon="speed"
+                onPress={() => onChangeAction('speed')}
+              ></Button>
+              <Text style={styles.text}>{locales.speed}</Text>
+            </View>
+          )}
           <View style={styles.action}>
             <Button
               iconStyle={styles.icon}
@@ -41,16 +53,27 @@ const Actions = (props) => {
               icon="music"
               onPress={() => onChangeAction('music')}
             ></Button>
-            <Text style={styles.text}>Background</Text>
+            <Text style={styles.text}>{locales.background}</Text>
           </View>
+          {hasEffect && (
+            <View style={styles.action}>
+              <Button
+                iconStyle={styles.icon}
+                style={styles.btn}
+                icon="effect"
+                onPress={() => onChangeAction('effect')}
+              ></Button>
+              <Text style={styles.text}>{locales.effect}</Text>
+            </View>
+          )}
           <View style={styles.action}>
             <Button
               iconStyle={styles.icon}
               style={styles.btn}
-              icon="effect"
-              onPress={() => onChangeAction('effect')}
+              icon="checked"
+              onPress={() => onConfirm()}
             ></Button>
-            <Text style={styles.text}>Effect</Text>
+            <Text style={styles.text}> </Text>
           </View>
         </View>
       )}
@@ -88,6 +111,7 @@ const styles = StyleSheet.create({
     marginRight: 0,
     width: 20,
     height: 20,
+    tintColor: 'white',
   },
 });
 

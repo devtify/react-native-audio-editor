@@ -13,9 +13,14 @@ import Video from 'react-native-video';
 import Slider from '@react-native-community/slider';
 import Trimmer from '../Trimmer';
 import Icons from '../assets/Icons';
-import { useBackgroundAudio } from '../AudioEditorContext';
+import {
+  useBackgroundAudio,
+  useLocales,
+  useThemes,
+} from '../AudioEditorContext';
 
 const BGTrimmer = ({ playling, onChangeSeek }) => {
+  const themes = useThemes();
   const {
     setBackgroundAudio,
     trimmerLeftHandlePositionBG,
@@ -44,12 +49,19 @@ const BGTrimmer = ({ playling, onChangeSeek }) => {
   useEffect(() => {
     let scrubberInterval = null;
     onChangeSeek(trimmerLeftHandlePositionBG);
+
     if (!playling) {
       setScrubberPosition(trimmerLeftHandlePositionBG);
     } else {
       setScrubberPosition(trimmerLeftHandlePositionBG);
       scrubberInterval = setInterval(() => {
-        setScrubberPosition((old) => old + 50);
+        setScrubberPosition((old) => {
+          if (old + 50 > trimmerRightHandlePositionBG) {
+            clearInterval(scrubberInterval);
+            return old;
+          }
+          return old + 50;
+        });
       }, 50);
     }
     return () => {
@@ -82,11 +94,11 @@ const BGTrimmer = ({ playling, onChangeSeek }) => {
       zoomMultiplier={1}
       initialZoomValue={1}
       scaleInOnInit={false}
-      tintColor="#FFCA28"
-      markerColor="#ffffff"
-      trackBackgroundColor="#ffffff10"
-      trackBorderColor="#ffffff10"
-      scrubberColor="#FFCA28"
+      tintColor={themes.tintColor}
+      markerColor={themes.markerColor}
+      trackBackgroundColor={themes.trackBackgroundColor}
+      trackBorderColor={themes.trackBorderColor}
+      scrubberColor={themes.scrubberColor}
       scrubberPosition={scrubberPosition}
       onScrubbingComplete={setScrubberPosition}
       onLeftHandlePressIn={() => console.log('onLeftHandlePressIn')}
@@ -97,6 +109,9 @@ const BGTrimmer = ({ playling, onChangeSeek }) => {
 };
 
 const BackgroundAudioPreview = ({ playling, maxTrimDuration }) => {
+  const [bgPlayling, setPlayling] = useState(false);
+  const themes = useThemes();
+  const locales = useLocales();
   const {
     setBackgroundAudio,
     trimmerLeftHandlePositionBG,
@@ -112,20 +127,33 @@ const BackgroundAudioPreview = ({ playling, maxTrimDuration }) => {
     trimmerLeftHandlePositionBG,
   );
 
+  const styles = useMemo(() => genStyles(themes), [themes]);
+
   const del = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setBackgroundAudio(null);
   };
 
   const onChangeSeek = (e) => {
-    // ref.current.seek(e / 1000);
+    ref.current.seek(e / 1000);
+    if (e >= trimmerRightHandlePositionBG) {
+      setPlayling(false);
+    }
   };
+
+  useEffect(() => {
+    if (!playling) {
+      setPlayling(false);
+    } else {
+      setPlayling(true);
+    }
+  }, [playling]);
 
   return (
     <View style={styles.container}>
       <View style={styles.overlay} />
       <View style={styles.row}>
-        <Text style={styles.text}>Background audio</Text>
+        <Text style={styles.text}>{locales.backgroundMusic}</Text>
         <TouchableOpacity onPress={del}>
           <View style={styles.delWrapper}>
             <Image source={Icons.del} style={styles.icon} />
@@ -134,7 +162,7 @@ const BackgroundAudioPreview = ({ playling, maxTrimDuration }) => {
       </View>
       {!!backgroundAudio?.data?.duration && (
         <BGTrimmer
-          playling={playling}
+          playling={bgPlayling}
           onChangeSeek={onChangeSeek}
           maxTrimDuration={maxTrimDuration}
         />
@@ -152,99 +180,104 @@ const BackgroundAudioPreview = ({ playling, maxTrimDuration }) => {
           maximumValue={1}
           value={bgVolumn}
           onValueChange={setBGVolumn}
-          minimumTrackTintColor="#FFFFFF"
-          maximumTrackTintColor="#FFFFFF10"
-          thumbTintColor="#FFCA28"
+          minimumTrackTintColor={themes.markerColor}
+          maximumTrackTintColor={themes.trackBackgroundColor}
+          thumbTintColor={themes.tintColor}
         />
         <View style={styles.thumb} />
       </View>
-      {/* <Video
+      <Video
         ignoreSilentSwitch="ignore"
         source={{
           uri: backgroundAudio?.data?.audioLink,
         }}
         audioOnly
         ref={ref}
-        muted
         volume={bgVolumn}
         onEnd={() => {}}
         onSeek={(e) => console.log(e)}
-        paused={!playling}
-      /> */}
+        paused={!bgPlayling}
+        onProgress={(e) => {
+          if (e.currentTime * 1000 >= trimmerRightHandlePositionBG) {
+            setPlayling(false);
+          }
+        }}
+      />
     </View>
   );
 };
 BackgroundAudioPreview.propTypes = {};
 
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: 10,
-    paddingVertical: 10,
-    marginTop: 5,
-    marginBottom: 10,
-    paddingBottom: 20,
-  },
-  overlay: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 10,
-    paddingVertical: 10,
-    marginTop: 5,
-    marginBottom: 10,
-    position: 'absolute',
-    top: 0,
-    left: 20,
-    right: 20,
-    bottom: 0,
-  },
-  text: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    flex: 1,
-    paddingLeft: 50,
-  },
-  row: {
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    paddingHorizontal: 40,
-    alignItems: 'center',
-  },
-  icon: {
-    width: 15,
-    height: 15,
-    resizeMode: 'contain',
-  },
-  delWrapper: {
-    width: 50,
-    alignItems: 'flex-end',
-    height: 40,
-    justifyContent: 'center',
-  },
-  val: {
-    color: 'white',
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  sliderWrapper: {
-    justifyContent: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  slider: {
-    width: Dimensions.get('window').width - 62,
-    alignSelf: 'center',
-  },
-  thumb: {
-    height: 5,
-    width: 2,
-    backgroundColor: 'white',
-  },
-  trimmer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: Dimensions.get('window').width,
-  },
-});
+const genStyles = (themes) =>
+  StyleSheet.create({
+    container: {
+      borderRadius: 10,
+      paddingVertical: 10,
+      marginTop: 5,
+      marginBottom: 10,
+      paddingBottom: 20,
+    },
+    overlay: {
+      backgroundColor: themes.trackBackgroundColor,
+      borderRadius: 10,
+      paddingVertical: 10,
+      marginTop: 5,
+      marginBottom: 10,
+      position: 'absolute',
+      top: 0,
+      left: 20,
+      right: 20,
+      bottom: 0,
+    },
+    text: {
+      color: 'white',
+      fontSize: 14,
+      fontWeight: '500',
+      textAlign: 'center',
+      flex: 1,
+      paddingLeft: 50,
+    },
+    row: {
+      justifyContent: 'space-between',
+      flexDirection: 'row',
+      paddingHorizontal: 40,
+      alignItems: 'center',
+    },
+    icon: {
+      width: 15,
+      height: 15,
+      resizeMode: 'contain',
+    },
+    delWrapper: {
+      width: 50,
+      alignItems: 'flex-end',
+      height: 40,
+      justifyContent: 'center',
+    },
+    val: {
+      color: 'white',
+      fontWeight: '500',
+      textAlign: 'center',
+    },
+    sliderWrapper: {
+      justifyContent: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    slider: {
+      width: Dimensions.get('window').width - 62,
+      alignSelf: 'center',
+    },
+    thumb: {
+      height: 5,
+      width: 2,
+      backgroundColor: 'white',
+    },
+    trimmer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: Dimensions.get('window').width,
+    },
+  });
 
 export default BackgroundAudioPreview;

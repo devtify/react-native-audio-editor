@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import Video from 'react-native-video';
 import PropTypes from 'prop-types';
 import {
@@ -10,7 +10,11 @@ import {
   StyleSheet,
 } from 'react-native';
 import Button from '../Button';
-import { useBackgroundAudio } from '../AudioEditorContext';
+import {
+  useBackgroundAudio,
+  useLocales,
+  useThemes,
+} from '../AudioEditorContext';
 import PlaylistCard from './PlaylistCard';
 import SearchInput from './SearchInput';
 import LazyLoadFlatList from '../OptimizedFlatList/LazyLoadFlatList';
@@ -25,6 +29,10 @@ const BackgroundAudioModal = ({ onClose, ...props }) => {
     setTrimmerLeftBG,
     setTrimmerRightBG,
   } = useBackgroundAudio();
+  const locales = useLocales();
+  const themes = useThemes();
+  const styles = useMemo(() => genStyles(themes), [themes]);
+
   const [playItem, setPlayItem] = useState(null);
   const [searchKey, setSearchKey] = useState('');
   const onSelect = (item) => {
@@ -58,7 +66,7 @@ const BackgroundAudioModal = ({ onClose, ...props }) => {
   return (
     <View style={styles.container}>
       <SearchInput
-        placeholder="Search Music"
+        placeholder={locales.placeholderSearch}
         onChange={setSearchKey}
         onSearch={setSearchKey}
       />
@@ -88,18 +96,19 @@ const BackgroundAudioModal = ({ onClose, ...props }) => {
 };
 BackgroundAudioModal.propTypes = {};
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 20,
-    borderTopColor: '#ffffff10',
-    borderTopWidth: 1,
-    backgroundColor: '#061A31',
-    flex: 1,
-  },
-  scrollview: {
-    width: Dimensions.get('window').width,
-  },
-  flex1: {},
-});
+const genStyles = (themes) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: 20,
+      borderTopColor: themes.trackBackgroundColor,
+      borderTopWidth: 1,
+      backgroundColor: themes.backgroundColor,
+      flex: 1,
+    },
+    scrollview: {
+      width: Dimensions.get('window').width,
+    },
+    flex1: {},
+  });
 
 export default BackgroundAudioModal;
