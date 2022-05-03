@@ -1,7 +1,7 @@
 {
   "name": "react-native-audio-editor",
   "title": "React Native Audio Editor",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "TODO",
   "main": "index.js",
   "files": [
@@ -9,6 +9,7 @@
     "android",
     "index.js",
     "ios",
+    "src",
     "react-native-audio-editor.podspec"
   ],
   "scripts": {
@@ -16,8 +17,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/github_account/react-native-audio-editor.git",
-    "baseUrl": "https://github.com/github_account/react-native-audio-editor"
+    "url": "git+https://github.com/devtify/react-native-audio-editor.git",
+    "baseUrl": "https://github.com/devtify/react-native-audio-editor"
   },
   "keywords": [
     "react-native"

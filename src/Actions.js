@@ -7,7 +7,14 @@ import BackgroundAudios from './BackgroundAudios';
 import Effect from './Effect';
 import { useLocales } from './AudioEditorContext';
 
-const Actions = ({ hasSpeed, hasEffect, onConfirm, onCancel }) => {
+const Actions = ({
+  hasSpeed,
+  hasConfirm,
+  hasClose,
+  hasEffect,
+  onConfirm,
+  onCancel,
+}) => {
   const [action, setAction] = useState();
   const locales = useLocales();
   const onChangeAction = (e) => {
@@ -26,15 +33,17 @@ const Actions = ({ hasSpeed, hasEffect, onConfirm, onCancel }) => {
       {action === 'effect' && <Effect onClose={onClose} />}
       {!action && (
         <View style={styles.container}>
-          <View style={styles.action}>
-            <Button
-              iconStyle={styles.icon}
-              style={styles.btn}
-              icon="close"
-              onPress={onCancel}
-            ></Button>
-            <Text style={styles.text}> </Text>
-          </View>
+          {!!hasClose && (
+            <View style={styles.action}>
+              <Button
+                iconStyle={styles.icon}
+                style={styles.btn}
+                icon="close"
+                onPress={onCancel}
+              ></Button>
+              <Text style={styles.text}> </Text>
+            </View>
+          )}
           {hasSpeed && (
             <View style={styles.action}>
               <Button
@@ -46,6 +55,7 @@ const Actions = ({ hasSpeed, hasEffect, onConfirm, onCancel }) => {
               <Text style={styles.text}>{locales.speed}</Text>
             </View>
           )}
+
           <View style={styles.action}>
             <Button
               iconStyle={styles.icon}
@@ -66,15 +76,17 @@ const Actions = ({ hasSpeed, hasEffect, onConfirm, onCancel }) => {
               <Text style={styles.text}>{locales.effect}</Text>
             </View>
           )}
-          <View style={styles.action}>
-            <Button
-              iconStyle={styles.icon}
-              style={styles.btn}
-              icon="checked"
-              onPress={() => onConfirm()}
-            ></Button>
-            <Text style={styles.text}> </Text>
-          </View>
+          {!!hasConfirm && (
+            <View style={styles.action}>
+              <Button
+                iconStyle={styles.icon}
+                style={styles.btn}
+                icon="checked"
+                onPress={() => onConfirm()}
+              ></Button>
+              <Text style={styles.text}> </Text>
+            </View>
+          )}
         </View>
       )}
     </View>

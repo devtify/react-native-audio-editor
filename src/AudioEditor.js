@@ -1,4 +1,13 @@
-import React, { useRef, useEffect, useContext, useState, useMemo } from 'react';
+import React, {
+  useRef,
+  useEffect,
+  useContext,
+  useState,
+  useMemo,
+  forwardRef,
+  useImperativeHandle,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 import {
   View,
@@ -107,166 +116,189 @@ const AudioTrimmer = ({ playling, setPlayling, onChangeSeek }) => {
   );
 };
 
-const AudioEditorUI = ({ hasSpeed, hasEffect, onCancel, onConfirm }) => {
-  const [loading, setLoading] = useState(false);
-  const [playling, setPlayling] = useState(false);
-  const [isConfirm, setIsConfirm] = useState(false);
+const AudioEditorUI = forwardRef(
+  (
+    { hasSpeed, hasConfirm, hasClose, hasEffect, onCancel, onConfirm },
+    _ref,
+  ) => {
+    const [loading, setLoading] = useState(false);
+    const [playling, setPlayling] = useState(false);
+    const [isConfirm, setIsConfirm] = useState(false);
 
-  const ref = useRef();
+    const ref = useRef();
 
-  const {
-    backgroundAudio,
-    setDuration,
-    trimmerLeftHandlePosition,
-    audioUri,
-    trimmerRightHandlePosition,
-    duration,
-    result,
-    setResult,
-    bgVolumn,
-    speed,
-    trimmerLeftHandlePositionBG,
-    trimmerRightHandlePositionBG,
-    audioEffect,
-    themes,
-    locales,
-  } = useContext(AudioEditorContext);
+    const {
+      backgroundAudio,
+      setDuration,
+      trimmerLeftHandlePosition,
+      audioUri,
+      trimmerRightHandlePosition,
+      duration,
+      result,
+      setResult,
+      bgVolumn,
+      speed,
+      trimmerLeftHandlePositionBG,
+      trimmerRightHandlePositionBG,
+      audioEffect,
+      themes,
+      locales,
+    } = useContext(AudioEditorContext);
 
-  const styles = useMemo(() => genStyles(themes), [themes]);
+    const styles = useMemo(() => genStyles(themes), [themes]);
 
-  const playScrubber = () => {
-    onChangeSeek(trimmerLeftHandlePosition);
-    setPlayling(true);
-    compressResult();
-  };
+    const playScrubber = () => {
+      onChangeSeek(trimmerLeftHandlePosition);
+      setPlayling(true);
+      compressResult();
+    };
 
-  const compressResult = () => {
-    setLoading(true);
-    if (backgroundAudio) {
-      makeBackgroundAudio(
-        {
-          volumn: bgVolumn,
-          start: trimmerLeftHandlePositionBG / 1000,
-          end: trimmerRightHandlePositionBG / 1000,
-          uri: backgroundAudio?.data?.audioLink,
-        },
-        {
-          uri: audioUri,
-          speed,
-          start: trimmerLeftHandlePosition / 1000,
-          end: trimmerRightHandlePosition / 1000,
-          audioEffect,
-        },
-      )
+    const compressResult = useCallback(() => {
+      setLoading(true);
+      if (backgroundAudio) {
+        makeBackgroundAudio(
+          {
+            volumn: bgVolumn,
+            start: trimmerLeftHandlePositionBG / 1000,
+            end: trimmerRightHandlePositionBG / 1000,
+            uri: backgroundAudio?.data?.audioLink,
+          },
+          {
+            uri: audioUri,
+            speed,
+            start: trimmerLeftHandlePosition / 1000,
+            end: trimmerRightHandlePosition / 1000,
+            audioEffect,
+          },
+        )
+          .then((e) => {
+            setResult(e);
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+        return;
+      }
+      trimAudio({
+        uri: audioUri,
+        speed,
+        start: trimmerLeftHandlePosition / 1000,
+        end: trimmerRightHandlePosition / 1000,
+        audioEffect,
+      })
         .then((e) => {
           setResult(e);
         })
         .finally(() => {
           setLoading(false);
         });
-      return;
-    }
-    trimAudio({
-      uri: audioUri,
-      speed,
-      start: trimmerLeftHandlePosition / 1000,
-      end: trimmerRightHandlePosition / 1000,
+    }, [
+      backgroundAudio,
+      trimmerRightHandlePosition,
+      trimmerLeftHandlePosition,
       audioEffect,
-    })
-      .then((e) => {
-        setResult(e);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
+      speed,
+      bgVolumn,
+      trimmerLeftHandlePositionBG,
+      trimmerRightHandlePositionBG,
+    ]);
 
-  const pauseScrubber = () => {
-    setPlayling(false);
-  };
+    const pauseScrubber = () => {
+      setPlayling(false);
+    };
 
-  const onChangeSeek = (e) => {
-    ref.current?.seek?.(e / 1000);
-  };
+    const onChangeSeek = (e) => {
+      ref.current?.seek?.(e / 1000);
+    };
 
-  const _onConfirm = () => {
-    if (result && !loading) {
-      onConfirm?.(result);
-    } else {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setIsConfirm(true);
-      !result && compressResult();
-    }
-  };
+    const _onConfirm = useCallback(() => {
+      if (result && !loading) {
+        onConfirm?.(result);
+      } else {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setIsConfirm(true);
+        !result && compressResult();
+      }
+    }, [compressResult, loading, result]);
 
-  useEffect(() => {
-    if (isConfirm && !loading && result) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      onConfirm?.(result);
-      setIsConfirm(false);
-    }
-  }, [isConfirm, loading, result]);
+    useEffect(() => {
+      if (isConfirm && !loading && result) {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        onConfirm?.(result);
+        setIsConfirm(false);
+      }
+    }, [isConfirm, loading, result]);
 
-  return (
-    <>
-      <SafeAreaView style={styles.wrapper}>
-        <Video
-          ignoreSilentSwitch="ignore"
-          source={{
-            uri: audioUri,
-          }}
-          ref={ref}
-          audioOnly
-          onEnd={() => {}}
-          paused={!playling}
-          onLoad={(e) => {
-            !duration && setDuration(e.duration);
-          }}
-        />
-        {duration ? (
-          <View style={styles.container}>
-            <View style={styles.centerContent}>
-              <AudioTrimmer
-                onChangeSeek={onChangeSeek}
-                playling={!!result && playling}
-                setPlayling={setPlayling}
+    useImperativeHandle(
+      _ref,
+      () => ({
+        onSubmit: _onConfirm,
+      }),
+      [_onConfirm],
+    );
+
+    return (
+      <>
+        <SafeAreaView style={styles.wrapper}>
+          <Video
+            ignoreSilentSwitch="ignore"
+            source={{
+              uri: audioUri,
+            }}
+            ref={ref}
+            audioOnly
+            onEnd={() => {}}
+            paused={!playling}
+            onLoad={(e) => {
+              !duration && setDuration(e.duration);
+            }}
+          />
+          {duration ? (
+            <View style={styles.container}>
+              <View style={styles.centerContent}>
+                <AudioTrimmer
+                  onChangeSeek={onChangeSeek}
+                  playling={!!result && playling}
+                  setPlayling={setPlayling}
+                />
+                {!!backgroundAudio && (
+                  <BackgroundAudioPreview playling={playling} />
+                )}
+                <Button
+                  onPress={playling ? pauseScrubber : playScrubber}
+                  icon={playling ? 'pause' : 'play'}
+                >
+                  {playling ? locales.pause : locales.play}
+                </Button>
+              </View>
+              <Actions
+                onConfirm={_onConfirm}
+                onCancel={onCancel}
+                hasSpeed={hasSpeed}
+                hasEffect={hasEffect}
+                hasClose={hasClose}
+                hasConfirm={hasConfirm}
               />
-              {!!backgroundAudio && (
-                <BackgroundAudioPreview playling={playling} />
-              )}
-              <Button
-                onPress={playling ? pauseScrubber : playScrubber}
-                icon={playling ? 'pause' : 'play'}
-              >
-                {playling ? locales.pause : locales.play}
-              </Button>
             </View>
-            <Actions
-              onConfirm={_onConfirm}
-              onCancel={onCancel}
-              hasSpeed={hasSpeed}
-              hasEffect={hasEffect}
-            />
+          ) : null}
+        </SafeAreaView>
+        {isConfirm && (
+          <View style={styles.overlay}>
+            <ActivityIndicator />
           </View>
-        ) : null}
-      </SafeAreaView>
-      {isConfirm && (
-        <View style={styles.overlay}>
-          <ActivityIndicator />
-        </View>
-      )}
-    </>
-  );
-};
+        )}
+      </>
+    );
+  },
+);
 
-const AudioEditor = ({
-  initSpeed,
-  audioUri = 'https://audio.meetyourgenie.com/threads/tai-sao-nguoi-tre-lai-thich-dau-tu-tai-chinh-7f89d276f0e56118.mp3',
-  ...props
-}) => {
+const AudioEditor = (props, _ref) => {
+  const ref = useRef();
+  useImperativeHandle(_ref, () => ({ onSubmit: ref.current.onSubmit }), [ref]);
+
   return (
-    <AudioEditorContextProvider initSpeed={initSpeed} audioUri={audioUri}>
-      <AudioEditorUI {...props} />
+    <AudioEditorContextProvider {...props}>
+      <AudioEditorUI {...props} ref={ref} />
     </AudioEditorContextProvider>
   );
 };
@@ -276,6 +308,9 @@ AudioEditor.propTypes = {
   initSpeed: PropTypes.number,
   hasEffect: PropTypes.bool,
   hasSpeed: PropTypes.bool,
+  hasConfirm: PropTypes.bool,
+  hasClose: PropTypes.bool,
+  locales: PropTypes.object,
 };
 
 const genStyles = (themes) =>
@@ -326,4 +361,4 @@ const genStyles = (themes) =>
     },
   });
 
-export default AudioEditor;
+export default React.forwardRef(AudioEditor);

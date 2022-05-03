@@ -9,18 +9,37 @@
  */
 
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableHighlight,
+  View,
+} from 'react-native';
 import AudioEditor from 'react-native-audio-editor';
+import {useRef} from 'react';
 
-export default class App extends Component {
-  render() {
-    return (
-      <View style={styles.container}>
-        <AudioEditor />
-      </View>
-    );
-  }
-}
+const App = () => {
+  const ref = useRef();
+
+  const onConfirm = () => {
+    ref.current.onSubmit();
+  };
+
+  return (
+    <View style={styles.container}>
+      <TouchableHighlight>
+        <View style={{height: 40, marginTop: 100}}>
+          <Text onPress={onConfirm}>asd</Text>
+        </View>
+      </TouchableHighlight>
+      <AudioEditor
+        ref={ref}
+        audioUri="https://audio.meetyourgenie.com/threads/buoc-qua-nhau-vu-b93ce5c577f7c0b9..mp3"
+      />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -39,3 +58,5 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
 });
+
+export default App;

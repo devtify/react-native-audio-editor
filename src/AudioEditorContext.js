@@ -82,8 +82,6 @@ export const AudioEditorContextProvider = ({
   defaultResult,
   initialBackgroundAudio,
 }) => {
-  const [_themes] = useState(themes || THEMES);
-  const [_locales] = useState(locales || LOCALES);
   const [speed, setSpeed] = useState(initialSpeed);
   const [audioEffect, setAudioEffect] = useState(initialAudioEffect);
   const [result, setResult] = useState(defaultResult);
@@ -140,8 +138,8 @@ export const AudioEditorContextProvider = ({
       setResult,
       audioEffect,
       setAudioEffect,
-      themes: _themes,
-      locales: _locales,
+      themes: themes || THEMES,
+      locales: locales || LOCALES,
     }),
     [
       speed,
@@ -164,8 +162,8 @@ export const AudioEditorContextProvider = ({
       setResult,
       audioEffect,
       setAudioEffect,
-      _themes,
-      _locales,
+      themes,
+      locales,
     ],
   );
 
